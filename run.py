@@ -2,6 +2,7 @@ from pygame import *
 import random
 
 class Sprite:
+    '''Base class for sprite objects'''
     def __init__(self, xpos, ypos, filename):
         self.x = xpos
         self.y = ypos
@@ -9,10 +10,29 @@ class Sprite:
     def render(self):
         screen.blit(self.bitmap, (self.x, self.y))
         
-#class Bike(Sprite):
-#    def get_keyboard_event(self):
-#        pass
-        
+class Bike(Sprite):
+    SPEED = 1
+    FLEXIBILITY = 10
+    def __init__(self):
+        Sprite.__init__(self, 320, 400, 'data/player.png')
+    def get_keyboard_event(self, ourevent):
+        if ourevent.type == KEYDOWN:
+            if ourevent.key == K_RIGHT and self.x < 500: #Road.get_right_border(road):
+                self.x += self.FLEXIBILITY
+            if ourevent.key == K_LEFT and self.x > 100: #Road.get_left_border(road):
+                self.x -= self.FLEXIBILITY
+                
+class Road():
+    RIGHT_BORDER = 500
+    LEFT_BORDER = 100
+    def get_right_border(self):
+        return self.RIGHT_BORDER
+    def get_left_border(self):
+        return self.LEFT_BORDER
+
+class Enemy(Sprite):
+    pass
+
 def Intersect(s1_x, s1_y, s2_x, s2_y):
     if (s1_x > s2_x - 40) and (s1_x < s2_x + 40) and (s1_y > s2_y -
         40) and (s1_y < s2_y + 40):
@@ -21,13 +41,10 @@ def Intersect(s1_x, s1_y, s2_x, s2_y):
         return 0
 
 def main():
-    RIGHT_BORDER = 500
-    LEFT_BORDER = 100
-    BIKE_HORISONTAL_SPEED = 10
-    BIKE_SPEED = 15
     key.set_repeat(1, 1)
-    player = Sprite(20, 400, 'data/player.png')
-    enemy = Sprite(random.randrange(100, 500), 0, 'data/enemy.png')
+    road = Road()
+    player = Bike()
+    enemy = Enemy(random.randrange(100, 500), 0, 'data/enemy.png')
     tree1 = Sprite(10, 0, 'data/tree.png')
     tree2 = Sprite(550, 240, 'data/tree.png')
     whiteline1 = Sprite(315, 0, 'data/whiteline.png')
@@ -38,8 +55,11 @@ def main():
     quit = 0
     #Main cycle:
     while quit == 0:
+        #======Screen
         screen.fill((0,200,0))
         screen.fill((200,200,200), ((100, 0), (440, 480)))
+        
+        #------------TREES
         tree1.render()
         tree1.y += 10
         if (tree1.y > 480):
@@ -48,6 +68,7 @@ def main():
         tree2.y += 10
         if (tree2.y > 480): 
             tree2.y = -110
+        #=======Whiteline
         whiteline1.render()
         whiteline1.y += 10
         if (whiteline1.y > 480):
@@ -56,39 +77,36 @@ def main():
         whiteline2.y += 10
         if (whiteline2.y > 480):
             whiteline2.y = -80
+        #----------ENEMIES--------------
         enemy.render()
-        enemy.y += 15
+        enemy.y += 5
         if (enemy.y > 480):
             enemy.y = -100
             enemy.x = random.randrange(100, 500)
-#        x, y = mouse.get_pos()
-#        if (x < 100):
-#            x = 100
-#        if (x > 500):
-#            x = 500
-#        player.x = x
-        
+
+        #----------SCORE----------------------        
         scoretext = scorefont.render('Score: ' + str(score), 
                                      True, (255,255,255), (0,0,0))
         screen.blit(scoretext, (5,5))
+        
+        #----------Intersections----------------------
         if (Intersect(player.x, player.y, enemy.x, enemy.y)):
 #            mixer.Sound.play(crasheffect)
             if (score > maxscore):
                 maxscore = score
                 score = 0
-        
+                
+        #------------Ivents---------------
         for ourevent in event.get():
             if ourevent.type == QUIT:
                 quit = 1
-            if ourevent.type == KEYDOWN:
-                if ourevent.key == K_RIGHT and player.x < RIGHT_BORDER:
-                    player.x += BIKE_HORISONTAL_SPEED
-                if ourevent.key == K_LEFT and player.x > LEFT_BORDER:
-                    player.x -= BIKE_HORISONTAL_SPEED
+            player.get_keyboard_event(ourevent)
+        #----------------------------------
         player.render()
-
         display.update()
-        time.delay(BIKE_SPEED)
+        time.delay(10)
+        
+        #----------SCORE COUNTER=-------------------
         score += 1
     print 'Your maximum score was:', maxscore
 
