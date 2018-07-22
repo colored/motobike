@@ -1,7 +1,9 @@
+from aetypes import Property
+
 from pygame import *
 import random
 
-class Sprite:
+class Sprite(object):
     '''Base class for sprite objects'''
     def __init__(self, xpos, ypos, filename):
         self.x = xpos
@@ -11,17 +13,36 @@ class Sprite:
         screen.blit(self.bitmap, (self.x, self.y))
         
 class Bike(Sprite):
-    SPEED = 1
     FLEXIBILITY = 10
-    def __init__(self):
-        Sprite.__init__(self, 320, 400, 'data/player.png')
+
+    def __init__(self, xpos=320, ypos=400, filepath='data/player.png'):
+        Sprite.__init__(self, xpos, ypos, filepath)
+        self._speed = 1
+
     def get_keyboard_event(self, ourevent):
         if ourevent.type == KEYDOWN:
             if ourevent.key == K_RIGHT and self.x < 500: #Road.get_right_border(road):
                 self.x += self.FLEXIBILITY
             if ourevent.key == K_LEFT and self.x > 100: #Road.get_left_border(road):
                 self.x -= self.FLEXIBILITY
-                
+
+    @property
+    def speed(self):
+        if self._speed < 50:
+            self._speed += 0.1
+        return self._speed
+
+    @speed.setter
+    def speed(self, speed):
+        self._speed = speed
+
+
+
+
+class Enemy(Sprite):
+    def __init__(self, xpos, ypos, filepath):
+        Sprite.__init__(self, xpos, ypos, filepath)
+
 class Road():
     RIGHT_BORDER = 500
     LEFT_BORDER = 100
@@ -30,8 +51,6 @@ class Road():
     def get_left_border(self):
         return self.LEFT_BORDER
 
-class Enemy(Sprite):
-    pass
 
 def Intersect(s1_x, s1_y, s2_x, s2_y):
     if (s1_x > s2_x - 40) and (s1_x < s2_x + 40) and (s1_y > s2_y -
@@ -61,20 +80,20 @@ def main():
         
         #------------TREES
         tree1.render()
-        tree1.y += 10
+        tree1.y += player.speed
         if (tree1.y > 480):
             tree1.y = -110
         tree2.render()
-        tree2.y += 10
+        tree2.y += player.speed
         if (tree2.y > 480): 
             tree2.y = -110
         #=======Whiteline
         whiteline1.render()
-        whiteline1.y += 10
+        whiteline1.y += player.speed
         if (whiteline1.y > 480):
             whiteline1.y = -80
         whiteline2.render()
-        whiteline2.y += 10
+        whiteline2.y += player.speed
         if (whiteline2.y > 480):
             whiteline2.y = -80
         #----------ENEMIES--------------
@@ -87,7 +106,10 @@ def main():
         #----------SCORE----------------------        
         scoretext = scorefont.render('Score: ' + str(score), 
                                      True, (255,255,255), (0,0,0))
-        screen.blit(scoretext, (5,5))
+        screen.blit(scoretext, (5, 5))
+        speedtext = scorefont.render('Speed: ' + str(player.speed),
+                                     True, (255,255,255), (0,0,0))
+        screen.blit(speedtext, (300, 5))
         
         #----------Intersections----------------------
         if (Intersect(player.x, player.y, enemy.x, enemy.y)):
@@ -95,8 +117,9 @@ def main():
             if (score > maxscore):
                 maxscore = score
                 score = 0
+            player.speed=1
                 
-        #------------Ivents---------------
+        #------------Events---------------
         for ourevent in event.get():
             if ourevent.type == QUIT:
                 quit = 1
